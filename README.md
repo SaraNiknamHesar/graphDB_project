@@ -10,8 +10,7 @@ This project combines advanced analytics and AI to build a smart music search sy
 | Surname      | Name      |
 | ------------ | --------- |
 | Niknam Hesar | Sara      |
-| Bimaj        | Kejsi     |
-| Tikhonov     | Vladislav |
+
 
 ---
 
