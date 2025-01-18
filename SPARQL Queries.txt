@@ -1,0 +1,321 @@
+
+Query 1: Number of Songs Released per Year
+
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?year (COUNT(?song) AS ?numberOfSongs)
+WHERE {
+    ?rankRecord a spotify:RankedRecord ;
+                spotify:assignedToSong ?song ;
+                spotify:date ?releaseDate .
+    BIND (SUBSTR(STR(?releaseDate), 1, 4) AS ?year)
+}
+GROUP BY ?year
+ORDER BY ASC(?year)
+
+Query 2: Total Streams per Year
+
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?year (SUM(?streamCount) AS ?totalStreams)
+WHERE {
+    ?rankRecord a spotify:RankedRecord ;
+                spotify:streamCount ?streamCount ;
+                spotify:date ?releaseDate .
+
+    BIND (SUBSTR(STR(?releaseDate), 1, 4) AS ?year)
+}
+GROUP BY ?year
+ORDER BY ASC(?year)
+
+Query 3: Top 10 songs that have most often been top 1 on the Top 200 chart
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?title ?artistName (COUNT(?song) AS ?totalTop1)
+WHERE {
+    ?rankRecord a spotify:RankedRecord ;
+                spotify:hasRank ?rank.
+
+    ?rankRecord spotify:associatedWithChart ?chart.
+    ?rankRecord spotify:assignedToSong ?song.
+    
+    ?chart a spotify:Top200.
+    
+    ?song spotify:songName ?title;
+    	  spotify:performedBy ?artist.
+    
+    ?artist foaf:name ?artistName.
+    
+    FILTER (?rank=1)
+    
+    
+}
+GROUP BY ?title ?artistName
+ORDER BY DESC(?totalTop1)
+LIMIT 10
+
+Query 4: Top 10 most frequent songs in the Viral 50 chart
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?title ?artistName (COUNT(?song) AS ?totalOccurrences)
+WHERE {
+    ?rankRecord a spotify:RankedRecord.
+
+    ?rankRecord spotify:associatedWithChart ?chart.
+    ?rankRecord spotify:assignedToSong ?song.
+    
+    ?chart a spotify:Viral50.
+    
+    ?song spotify:songName ?title;
+    	  spotify:performedBy ?artist.
+    
+    ?artist foaf:name ?artistName.
+    
+    
+}
+GROUP BY ?title ?artistName
+ORDER BY DESC(?totalOccurrences)
+LIMIT 10
+
+
+Query 5: Top 10 Songs by Streams in a Single Day (Changed the query because of the problems with "N per group" in sparql)
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?title ?artistName (MAX(?streamCount) AS ?numberOfStreams) ?year
+WHERE {
+    ?rankRecord a spotify:RankedRecord;
+    			  spotify:streamCount ?streamCount ;
+    			  spotify:date ?releaseDate .
+
+    BIND (SUBSTR(STR(?releaseDate), 1, 4) AS ?year)
+
+    ?rankRecord spotify:associatedWithChart ?chart.
+    ?rankRecord spotify:assignedToSong ?song.
+    
+    ?song spotify:songName ?title;
+    	  spotify:performedBy ?artist.
+    
+    ?artist foaf:name ?artistName.
+    
+    
+}
+GROUP BY ?title ?artistName ?year
+ORDER BY DESC(?numberOfStreams)
+LIMIT 10
+
+Query 6: Top 5 artists with the most nominated songs in the Top 200 (Changed the query because of the problems with "N per group" in sparql)
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+SELECT ?artistName (COUNT(DISTINCT ?song) as ?numOfSongs)
+WHERE {
+    ?rankRecord a spotify:RankedRecord.
+
+
+    ?rankRecord spotify:associatedWithChart ?chart.
+    ?rankRecord spotify:assignedToSong ?song.
+    
+    ?chart a spotify:Top200.
+    
+    ?song spotify:songName ?title;
+    	  spotify:performedBy ?artist.
+    
+    ?artist foaf:name ?artistName.
+   
+    
+    
+}
+GROUP BY ?artistName ?year
+ORDER BY DESC(?numOfSongs)
+LIMIT 5
+
+
+Query 7: Top 5 Most Streamed Songs
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?title ?artistName (SUM(?streamCount) AS ?numberOfStreams)
+WHERE {
+    ?rankRecord a spotify:RankedRecord;
+    			  spotify:streamCount ?streamCount.
+
+    ?rankRecord spotify:associatedWithChart ?chart.
+    ?rankRecord spotify:assignedToSong ?song.
+    
+    ?song spotify:songName ?title;
+    	  spotify:performedBy ?artist.
+    
+    ?artist foaf:name ?artistName.
+    
+    
+}
+GROUP BY ?title ?artistName
+ORDER BY DESC(?numberOfStreams)
+LIMIT 5
+
+Query 8: Number of Songs by Country
+
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?countryName (COUNT(?song) AS ?numberOfSongs)
+WHERE {
+    ?rankRecord a spotify:RankedRecord.
+
+    ?rankRecord spotify:associatedWithChart ?chart.
+    ?rankRecord spotify:assignedToSong ?song.
+    
+    ?chart spotify:publishedIn ?country.
+    
+    ?country spotify:region ?countryName.
+    
+    
+}
+GROUP BY ?countryName
+ORDER BY DESC(?numberOfSongs)
+
+Query 9: Top Taylor Swift Song by Total Streams 
+
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX so: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+
+SELECT ?songName (SUM(?streams) AS ?totalStreams)
+WHERE {
+  ?rank a spotify:RankedRecord ;
+        spotify:assignedToSong ?song ;
+        spotify:streamCount ?streams .
+
+  ?song spotify:performedBy ?artist ;
+        spotify:songName ?songName .
+
+  ?artist foaf:name "Taylor Swift" .
+}
+GROUP BY ?songName
+ORDER BY DESC(?totalStreams)
+LIMIT 10
+
+Query 10: Top 10 Countries by Total Streams
+
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?region (SUM(?streamCount) AS ?totalStreams)
+WHERE {
+  ?rank a spotify:RankedRecord ;
+          spotify:associatedWithChart ?chart ;
+          spotify:streamCount ?streamCount . 
+  ?chart spotify:publishedIn ?country .
+  ?country spotify:region ?region .
+}
+GROUP BY ?region
+ORDER BY DESC(?totalStreams)
+LIMIT 10
+
+Query 11:Top The top artist's highest ranked song in the Top200 chart for 2017
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?artistName ?songName (MAX(?rank) as ?highestRank) ?chartType ?streamCount
+WHERE {
+
+  ?rankInstance a spotify:RankedRecord ;
+                spotify:assignedToSong ?song ;
+                spotify:hasRank ?rank ;
+                spotify:date ?date ;
+                spotify:associatedWithChart ?chart ;
+                spotify:streamCount ?streamCount .
+  ?chart a spotify:Top200 ;
+         spotify:chartType ?chartType .
+  ?song a spotify:Song ;
+        spotify:performedBy ?artist ;
+        spotify:songName ?songName .
+  ?artist foaf:name ?artistName .
+  FILTER (?rank <= 10)
+  FILTER (?date >= "2017-01-01"^^xsd:date && ?date <= "2017-12-31"^^xsd:date)
+}
+GROUP BY ?artistName ?songName ?chartType ?streamCount
+ORDER BY ASC(?rank) DESC(?streamCount)
+LIMIT 1
+
+
+
+Query 12: Find Top Artists With Songs in the Top 50 of Top200, Excluding Specific Artists
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?artistName (COUNT(DISTINCT ?song) AS ?totalSongs) (SUM(?streamCount) AS ?totalStreams)
+WHERE {
+  ?rankInstance a spotify:RankedRecord ;
+                spotify:assignedToSong ?song ;
+                spotify:hasRank ?rank ;
+                spotify:associatedWithChart ?chart ;
+                spotify:streamCount ?streamCount .
+  ?chart a spotify:Top200 .
+  ?song a spotify:Song ;
+        spotify:performedBy ?artist .
+  ?artist a spotify:Artist ;
+          foaf:name ?artistName .
+  FILTER (?rank <= 50)
+  FILTER (!regex(?artistName, "Ed Sheeran|Drake|Taylor Swift", "i"))
+}
+GROUP BY ?artistName
+ORDER BY DESC(?totalSongs) DESC(?totalStreams)
+LIMIT 10
+
+Query 13: It retrieves the most streamed song and its artist for each country in 2020 by filtering records by year and selecting the maximum stream count per country.
+
+PREFIX spotify: <http://www.dei.unipd.it/GraphDatabases/SpotifyOntology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?countryRegion ?songName ?artistName ?maxStreamCount
+WHERE {
+  {
+    SELECT ?countryRegion (MAX(?streamCount) AS ?maxStreamCount)
+    WHERE {
+      ?rankedRecord a spotify:RankedRecord ;
+                    spotify:streamCount ?streamCount ;
+                    spotify:associatedWithChart ?chart ;
+                    spotify:date ?date .
+      ?chart spotify:publishedIn ?country .
+      ?country a spotify:Country ;
+               spotify:region ?countryRegion .
+      
+      FILTER (STRSTARTS(STR(?date), "2020"))
+    }
+    GROUP BY ?countryRegion
+  }
+  
+  ?rankedRecord a spotify:RankedRecord ;
+                spotify:streamCount ?streamCount ;
+                spotify:assignedToSong ?song ;
+                spotify:associatedWithChart ?chart ;
+                spotify:date ?date .
+  ?chart spotify:publishedIn ?country .
+  ?country a spotify:Country ;
+           spotify:region ?countryRegion .
+  ?song a spotify:Song ;
+        spotify:songName ?songName ;
+        spotify:performedBy ?artist .
+  ?artist foaf:name ?artistName .
+  
+  FILTER (STRSTARTS(STR(?date), "2020"))
+  FILTER (?streamCount = ?maxStreamCount)
+}
+ORDER BY ?countryRegion
